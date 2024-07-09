@@ -18,6 +18,24 @@ async def start_server():
     return {"message": "Server started"}
 
 
+@app.post("/server/stop")
+async def stop_server():
+    server_instance.stop_server()
+    return {"message": "Server stopped"}
+
+
+@app.post("/server/restart")
+async def restart_server():
+    server_instance.restart_server()
+    return {"message": "Server restarted"}
+
+
+@app.post("/server/world/recreate")
+async def recreate_world():
+    server_instance.recreate_world()
+    return {"message": "World recreated"}
+
+
 @app.post("/server/command")
 async def send_command(command: Command):
     server_instance.execute_command(command.command)
@@ -30,10 +48,16 @@ async def read_output():
     return {"output": output}
 
 
-@app.post("/server/stop")
-async def stop_server():
-    server_instance.stop_server()
-    return {"message": "Server stopped"}
+@app.get("/server/output/tail/{lines}")
+async def read_tail_specify_lines(lines: int):
+    output = server_instance.read_tail(lines)
+    return {"output": output}
+
+
+@app.get("/server/output/tail/")
+async def read_tail_default():
+    output = server_instance.read_tail()
+    return {"output": output}
 
 if __name__ == "__main__":
     import uvicorn
