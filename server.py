@@ -1,4 +1,7 @@
 import subprocess
+import os
+import shutil
+import datetime
 
 
 class ServerInstance:
@@ -7,6 +10,7 @@ class ServerInstance:
         self.process = None
         self.jarfile = jarfile
         self.output = []
+        self.world_name = 'world'
 
     def start_server(self):
         # Start the Minecraft server process
@@ -20,6 +24,15 @@ class ServerInstance:
 
         # Start a thread to read server output
         self._start_output_reader()
+
+    def _create_custom_log_massage(self, message):
+        # get current time
+        now = datetime.datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        return f'[{current_time}] [Warper]: {message}'
+
+    def append_to_output(self, message):
+        self.output.append(self._create_custom_log_massage(message))
 
     def _start_output_reader(self):
         # Read server output in a separate thread
@@ -54,6 +67,24 @@ class ServerInstance:
             self.process.wait()
             self.process = None
 
+    def restart_server(self):
+        self.stop_server()
+        self.start_server()
+
+    def recreate_world(self):
+        # Delete the world folder and restart the server
+        self.append_to_output('Recreating world...')
+        self.append_to_output('Stopping server...')
+        self.stop_server()
+        self.append_to_output('Deleting world folder...')
+        self._delete_world_folder()
+        self.append_to_output('World folder deleted. starting server...')
+        self.start_server()
+
+    def _delete_world_folder(self):
+        world_path = os.path.join(self.server_path, self.world_name)
+        shutil.rmtree(world_path, ignore_errors=True)
+
 
 server_path = 'server/'
 
@@ -73,5 +104,9 @@ while True:
     elif command == 'stop':
         server_instance.stop_server()
         break
+    elif command == 'restart':
+        server_instance.restart_server()
+    elif command == 'recreate world':
+        server_instance.recreate_world()
     else:
         server_instance.execute_command(command)
